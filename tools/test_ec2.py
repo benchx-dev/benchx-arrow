@@ -182,12 +182,13 @@ def test_a_comment_is_parsed_into_a_request():
         "commit": "abc1234", "machine": "small", "suite_filter": ".", "budget_minutes": "240"}
     assert parse("@github-actions benchmark main machine=big filter=bit-util|csv budget=30")[0] == {
         "commit": "main", "machine": "big", "suite_filter": "bit-util|csv", "budget_minutes": "30"}
-    for body, problem in (("@github-actions bench", "which commit"), ("@github-actions bench filter=x", "which commit"),
+    assert parse("@github-actions bench abc budget=030")[0]["budget_minutes"] == "30"
+    for body, problem in (("@github-actions bench", "no commit"), ("@github-actions bench filter=x", "no commit"),
                           ("@github-actions bench a..b", "does not look like a commit"),
                           ("@github-actions bench $(id)", "does not look like a commit"),
                           ("@github-actions bench abc machine=huge", "is not a machine"),
                           ("@github-actions bench abc budget=0", "budget is"), ("@github-actions bench abc budget=361", "budget is"),
-                          ("@github-actions bench abc budget=1e3", "budget is"), ("@github-actions bench abc verbose", "is not an option"),
+                          ("@github-actions bench abc budget=1e3", "budget is"), ("@github-actions bench abc budget=\u00b2", "budget is"), ("@github-actions bench abc verbose", "is not an option"),
                           ("@github-actions bench abc sha=def", "is not an option"), ("@github-actions bench abc filter=", "is not an option")):
         request, said = parse(body)
         assert request is None and problem in said, body

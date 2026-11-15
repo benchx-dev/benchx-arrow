@@ -44,7 +44,7 @@ def parse(body: str, machines: dict) -> tuple[dict | None, str | None]:
         return None, None
     words = (match.group(1) or "").split()
     if not words or "=" in words[0]:
-        return None, "which commit?"
+        return None, "no commit was named"
     commit = words[0]
     if not COMMIT.fullmatch(commit) or ".." in commit:
         return None, f"`{commit}` does not look like a commit"
@@ -57,8 +57,9 @@ def parse(body: str, machines: dict) -> tuple[dict | None, str | None]:
         request[{"filter": "suite_filter", "budget": "budget_minutes"}.get(key, key)] = value
     if request["machine"] not in machines:
         return None, f"`{request['machine']}` is not a machine; there are: {', '.join(f'`{m}`' for m in machines)}"
-    if not request["budget_minutes"].isdigit() or not 1 <= int(request["budget_minutes"]) <= MAX_BUDGET:
+    if not re.fullmatch(r"[0-9]{1,4}", request["budget_minutes"]) or not 1 <= int(request["budget_minutes"]) <= MAX_BUDGET:
         return None, f"budget is a number of minutes from 1 to {MAX_BUDGET}"
+    request["budget_minutes"] = str(int(request["budget_minutes"]))   # 030 would be octal to the shell that adds to it
     if len(request["suite_filter"]) > 200:
         return None, "the filter is too long"
     return request, None
